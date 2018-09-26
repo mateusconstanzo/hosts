@@ -1,17 +1,18 @@
 import argparse
 import os
+import abc
 
 PRESET_STRING = "### hosts - Preset {:s} "
 PRESET_STRING_END = "### END hosts - Preset {:s} "
 
 HOSTS_FILE="/etc/hosts"
-#HOSTS_FILE="/home/mateusconstanzo/hosts"
-PRESETS_FOLDER="/home/mateusconstanzo/presets"
+PRESETS_FOLDER="/opt/hosts/presets"
 
 MESSAGES = {
     "ACTIVE" : "### Preset enables",
     "SHOW" : "### Presets",
     "ENABLE_ALL" : "### All presets enabled",
+    "DISABLE_ALL" : "### All presets disabled",
     "ITEM_ENABLE" : "# {:s} # enable",
     "ITEM" : "# {:s}",
     "NOT_FOUND" : "### Preset not found",
@@ -73,6 +74,14 @@ class Presets:
 
         except:
             print MESSAGES["NOT_FOUND"]
+
+
+    def disable_all(self):
+
+        for preset in self.presets:
+            self.host.remove(preset)
+
+        print MESSAGES["DISABLE_ALL"]
 
 
     def enable(self, preset_name):
@@ -170,41 +179,97 @@ class Host:
 
         return content
 
-def show(args):
-    Presets().show()
+class Command:
 
-def actives(args):
-    Presets().actives()
+    __metaclass__ = abc.ABCMeta
 
-def enable_all(args):
-    Presets().enable_all()
+    def __init__(self, subparsers, command):
+        self.parse = subparsers.add_parser(command)
+        self.parse.set_defaults(func=self.call)
 
-def enable(args):
-    Presets().enable(args.preset)
+    @abc.abstractmethod
+    def call():
+        pass
 
-def disable(args):
-    Presets().disable(args.preset)
+class ShowCommand(Command):
+
+    COMMAND = 'show'
+
+    def __init__(self, subparsers):
+        super(ShowCommand, self).__init__(subparsers, self.COMMAND)
+
+    @staticmethod
+    def call(args):
+        Presets().show()
+
+class ActivesCommand(Command):
+
+    COMMAND = 'actives'
+
+    def __init__(self, subparsers):
+        super(ActivesCommand, self).__init__(subparsers, self.COMMAND)
+
+    @staticmethod
+    def call(args):
+        Presets().actives()
+
+class EnableAllCommand(Command):
+
+    COMMAND = 'enable-all'
+
+    def __init__(self, subparsers):
+        super(EnableAllCommand, self).__init__(subparsers, self.COMMAND)
+
+    @staticmethod
+    def call(args):
+        Presets().enable_all()
+
+class EnableCommand(Command):
+
+    COMMAND = 'enable'
+
+    def __init__(self, subparsers):
+        super(EnableCommand, self).__init__(subparsers, self.COMMAND)
+        self.parse.add_argument('preset')
+
+    @staticmethod
+    def call(args):
+        Presets().enable(args.preset)
+
+class DisableCommand(Command):
+
+    COMMAND = 'disable'
+
+    def __init__(self, subparsers):
+        super(DisableCommand, self).__init__(subparsers, self.COMMAND)
+        self.parse.add_argument('preset')
+
+    @staticmethod
+    def call(args):
+        Presets().disable(args.preset)
+
+class DisableAllCommand(Command):
+
+    COMMAND = 'disable-all'
+
+    def __init__(self, subparsers):
+        super(DisableAllCommand, self).__init__(subparsers, self.COMMAND)
+
+    @staticmethod
+    def call(args):
+        Presets().disable_all()
+
+def commands(subparsers):
+    ShowCommand(subparsers)
+    EnableCommand(subparsers)
+    EnableAllCommand(subparsers)
+    DisableCommand(subparsers)
+    DisableAllCommand(subparsers)
+    ActivesCommand(subparsers)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--version', action='version', version='1.0.0')
-subparsers = parser.add_subparsers()
-
-show_parser = subparsers.add_parser('show')
-show_parser.set_defaults(func=show)
-
-enable_all_parser = subparsers.add_parser('enable-all')
-enable_all_parser.set_defaults(func=enable_all)
-
-disable_parser = subparsers.add_parser('disable')
-disable_parser.add_argument('preset')
-disable_parser.set_defaults(func=disable)
-
-enable_parser = subparsers.add_parser('enable')
-enable_parser.add_argument('preset')
-enable_parser.set_defaults(func=enable)
-
-actives_parser = subparsers.add_parser('actives')
-actives_parser.set_defaults(func=actives)
+commands(parser.add_subparsers())
 
 if __name__ == '__main__':
     args = parser.parse_args()

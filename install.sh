@@ -1,4 +1,6 @@
 #!/bin/bash
 
-cp hosts.py hosts /usr/bin
-chmod +x /usr/bin/hosts
+mkdir -p /opt/hosts/presets
+cp hosts.py hosts /opt/hosts
+chmod +x /opt/hosts/hosts
+ln /opt/hosts/hosts /usr/bin/hosts
