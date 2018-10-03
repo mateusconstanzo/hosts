@@ -17,7 +17,7 @@ However, the great advantage of using **hosts** is that it allows the use of pre
 
 #### Install
 
-    git https://github.com/mateusconstanzo/hosts.git
+    git clone https://github.com/mateusconstanzo/hosts.git
     cd hosts
     chmod +x install.sh uninstall.sh
     sudo ./install.sh
